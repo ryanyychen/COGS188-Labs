@@ -37,7 +37,6 @@ class TrivialVacuumEnvironment:
     def __init__(self, agent: Agent | AgentMemory):
         self.status = {loc_A: random.choice(["Clean", "Dirty"]), loc_B: random.choice(["Clean", "Dirty"])}
         self.agent = agent
-        print(agent)
         self.action_space = ["Right", "Left", "Suck", "Stay"]
 
     def execute_action(self, agent: Agent, action):
