@@ -21,13 +21,6 @@ This file will focus on implementing search algorithms within the context of bin
 
 - **Binary Search:** A more efficient search algorithm that works on sorted data. It repeatedly divides the search interval in half, reducing the problem size logarithmically. Binary search has a time complexity of $O(\log n)$. To implement binary search, you will first construct a binary search tree (BST) as part of this lab.
 
-### `benchmark.py`
-
-In this file, you will compare and contrast the performance of linear search and binary search. The tasks include:
-- Empirically measuring the time complexity of both algorithms by testing them on datasets of varying sizes.
-- Analyzing the impact of data size and structure on performance.
-- Comparing the efficiency of linear and binary search algorithms under different conditions (e.g., sorted vs. unsorted data for linear search).
-
 
 ### Submission Guidelines
 
