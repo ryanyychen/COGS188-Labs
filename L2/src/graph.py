@@ -22,8 +22,8 @@ class Node:
         Args:
             end (Node): the end node
         """
-        # TODO your code here
-        ...
+        self.children.append(end)
+        end.parents.append(self)
 
     def add_undirected_edge(self, end: "Node"):
         """
@@ -34,8 +34,10 @@ class Node:
         Args:
             end (Node): the end node
         """
-        # TODO your code here
-        ...
+        self.children.append(end)
+        end.parents.append(self)
+        end.children.append(self)
+        self.parents.append(end)
 
     def __repr__(self):
         """String representation of the node"""
@@ -84,8 +86,17 @@ class Graph:
             end (Node): the end node
             directed (bool): whether the edge is directed or not, default is True
         """
-        # TODO your code here
-        ...
+        # Make sure start and send are in the graph
+        if start not in self.nodes:
+            self.add_node(start)
+        if end not in self.nodes:
+            self.add_node(end)
+
+        # Add edge
+        if directed:
+            start.add_directed_edge(end)
+        else:
+            start.add_undirected_edge(end)
 
 
 class Tree(Graph):
@@ -110,8 +121,24 @@ class Tree(Graph):
 
         Returns: (bool) whether the tree is valid or not
         """
-        # TODO your code here
-        ...
+        # Check for valid root
+        if (self.root == None):
+            return False
+        
+        # BFS starting at root to check for cycles
+        visited = []
+        queue = [self.root]
+        while (len(queue) != 0):
+            node = queue.pop(0)
+            visited.append(node)
+            for child in node.children:
+                if (child in visited):
+                    return False
+                else:
+                    queue.append(child)
+
+        # Return True if valid root and no cycles
+        return True
 
 
 class BinaryTreeNode(Node):
@@ -152,9 +179,23 @@ class BinarySearchTree(Tree):
             self.root = node
             self.nodes.add(node)
             return
+        
         current = self.root
-        # TODO your code here
-        ...
+        while True:
+            if node.value < current.value:
+                if current.left == None:
+                    current.add_left_child(node)
+                    self.nodes.add(node)
+                    break
+                else:
+                    current = current.left
+            elif node.value > current.value:
+                if current.right == None:
+                    current.add_right_child(node)
+                    self.nodes.add(node)
+                    break
+                else:
+                    current = current.right
 
     def validate_bst(self) -> bool:
         """
@@ -167,5 +208,32 @@ class BinarySearchTree(Tree):
             - The left child of a node must be less than the parent node
             - The right child of a node must be greater than the parent node
         """
-        # TODO your code here
-        ...
+
+        # Check for valid root
+        if (self.root == None):
+            return False
+        
+        # BFS starting at root to check for cycles, 2 children, and BST property
+        visited = []
+        queue = [self.root]
+        while (len(queue) != 0):
+            node = queue.pop(0)
+            visited.append(node)
+
+            # Check BST property
+            if (node.left != None):
+                if (node.left.value >= node.value):
+                    return False
+            if (node.right != None):
+                if (node.right.value <= node.value):
+                    return False
+
+            # Append nodes to queue
+            for child in node.children:
+                if (child in visited):
+                    return False
+                else:
+                    queue.append(child)
+        
+        # Return True if all checks pass
+        return True
