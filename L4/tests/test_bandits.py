@@ -52,14 +52,15 @@ class TestBandits(unittest.TestCase):
 
     # Tests for empirical_egreedy(epsilon, n_trials, n_arms, n_plays)
     def test_empirical_egreedy_return_type(self):
-        df = empirical_egreedy(0.1, 2, 3, 5)
-        self.assertIsInstance(df, pd.DataFrame)
+        rewards = empirical_egreedy(0.1, 2, 3, 5)
+        self.assertIsInstance(rewards, list)
+        self.assertEqual(len(rewards), 2, "rewards should have 5 trails")
+        self.assertEqual(len(rewards[0]), 5, "each trails should have 3 runs")
 
     def test_empirical_egreedy_dimensions(self):
         n_trials, n_plays = 2, 5
-        df = empirical_egreedy(0.1, n_trials, 3, n_plays)
-        # DataFrame has n_trials * n_plays rows
-        self.assertEqual(len(df), n_trials * n_plays)
+        rewards = empirical_egreedy(0.1, n_trials, 3, n_plays)
+        self.assertEqual(len(rewards[0]) * len(rewards), n_trials * n_plays)
 
     def test_empirical_egreedy_vary_epsilon(self):
         df1 = empirical_egreedy(0.0, 2, 3, 5)
