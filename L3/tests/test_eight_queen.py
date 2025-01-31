@@ -39,7 +39,7 @@ class TestEightQueensImplementation(unittest.TestCase):
             "3, 2 should be safe, even though there is a queen at 1, 2, which is on the same column, we don't have any queens on the same row or diagonal",
         )
         self.assertTrue(
-            is_safe_row_diag(self.board, 3, 0),
+            is_safe_row_diag(self.board, 4, 0),
             "3, 0 should be safe because there is no queen in the same row, column or diagonal",
         )
 

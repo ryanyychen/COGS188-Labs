@@ -4,7 +4,7 @@ import sys
 from typing import List, Tuple
 
 # define constants
-BOARD_SIZE = 8
+BOARD_SIZE = 4
 SQUARE_SIZE = 75  # This sets the size of the chessboard squares
 WINDOW_SIZE = BOARD_SIZE * SQUARE_SIZE
 WHITE = (255, 255, 255)
@@ -54,7 +54,56 @@ def is_safe_row_diag(board, row, col) -> bool:
         col: int
     return: bool, True if it's safe to place a queen, False otherwise
     """
-    # TODO
+
+    # Check row and col against bounds
+    if row < 0 or row >= len(board) or col < 0 or col >= len(board):
+        return False
+
+    # Check row by checking every column in row
+    for c in range(len(board)):
+        try:
+            if board[row][c] == 1:
+                return False
+        except:
+            print(f'row: {row}, col: {col}, c: {c}')
+            print(f'board size: {len(board)}')
+            return False
+        
+    # Check upper diagonals
+    for dec in range(1, row + 1):
+        # We know r = row - dec cannot be out of bounds since dec is based on row
+        r = row - dec
+        leftc = col - dec
+        rightc = col + dec
+
+        # Check column still in bounds
+        if (leftc >= 0):
+            if board[r][leftc] == 1:
+                return False
+            
+        # Check column still in bounds
+        if (rightc < len(board)):
+            if board[r][rightc] == 1:
+                return False
+    
+    # Check lower diagonals
+    for inc in range(1, len(board) - row):
+        # We know r = row + inc cannot be out of bounds since inc is based on row
+        r = row + inc
+        leftc = col - inc
+        rightc = col + inc
+
+        # Check column still in bounds
+        if (leftc >= 0):
+            if board[r][leftc] == 1:
+                return False
+        
+        # Check column still in bounds
+        if (rightc < len(board)):
+            if board[r][rightc] == 1:
+                return False
+
+    return True
 
 
 def solve_8_queens(board: List[List[int]], col: int) -> bool:
@@ -70,7 +119,21 @@ def solve_8_queens(board: List[List[int]], col: int) -> bool:
     Returns:
         bool: whether the solution exists
     """
-    # TODO
+    # Base case: all queens placed
+    if col == len(board):
+        return True
+    
+    # Recursive step:
+    for row in range(len(board)):
+        # Attempt to place queen in this column by checking every row
+        if is_safe_row_diag(board, row, col):
+            board[row][col] = 1
+            # Attempt to place queen in next column
+            if solve_8_queens(board, col + 1):
+                return True
+            board[row][col] = 0
+
+    return False
 
 
 def update_board():
