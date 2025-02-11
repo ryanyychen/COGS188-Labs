@@ -21,8 +21,15 @@ def transition(state, action):
     Returns:
     int: The next state.
     """
-    # TODO: Your code here
-    ...
+    if action == 'left':
+        if state == 1:
+            return 1
+        return state - 1
+    elif action == 'right':
+        if state == 5:
+            return 5
+        return state + 1
+    return state
 
 
 def reward(state, action):
@@ -36,8 +43,9 @@ def reward(state, action):
     Returns:
     int: The reward.
     """
-    # TODO: Your code here
-    ...
+    if state == 4 and action == 'right':
+        return 10
+    return -1
 
 
 
@@ -65,8 +73,21 @@ def my_policy(state):
     Returns:
     str: The action chosen by the policy.
     """
-    # TODO: Your code here
-    ...
+    prob = np.random.rand()
+    if state == 1:
+        if prob < 0.5:
+            return 'right'
+        return 'stay'
+    elif state == 5:
+        if prob < 0.5:
+            return 'left'
+        return 'stay'
+    else:
+        if prob < 0.3:
+            return 'left'
+        elif prob < 0.6:
+            return 'stay'
+        return 'right'
 
         
 def simulate_mdp(policy: Callable, initial_state=1, simulation_depth=20):
@@ -93,16 +114,34 @@ def simulate_mdp(policy: Callable, initial_state=1, simulation_depth=20):
     reward_history = [0] # Track the history of rewards
     
     for _ in range(simulation_depth):
-        # TODO: Your code here
-        ...
+        action = policy(current_state)
 
+        next_state = transition(current_state, action)
+        state_visits[next_state - 1] += 1
+        visited_history.append(next_state)
+
+        received_reward = reward(current_state, action)
+        reward_history.append(received_reward)
+        cumulative_reward += received_reward
+
+        current_state = next_state
+        if (current_state == 5):
+            break
     
     return state_visits, cumulative_reward, visited_history, reward_history
 
 
 def new_policy(state: List[int]) -> int:
-    # TODO: Your code here
-    ...
+    x, y = state
+    prob = np.random.rand()
+    if y < 3:
+        if prob < 0.3:
+            return 1
+        return 0
+    if prob < 0.7:
+        return 3
+    return 2
+
 
         
 def simulate_maze_env(env: MazeEnv, policy: Callable, num_steps=20):
@@ -123,9 +162,12 @@ def simulate_maze_env(env: MazeEnv, policy: Callable, num_steps=20):
     path = [state]
 
     for _ in range(num_steps):
-        # TODO: Your code here
-        ...
-
+        action = policy(env.state)
+        new_state, reward, done, useless_list = env.step(action)
+        total_reward += reward
+        path.append(new_state)
+        if done:
+            break
 
     return path, total_reward
 
@@ -144,13 +186,29 @@ def q_learning(env: MazeEnv, episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1) -
     Returns:
         np.ndarray: The learned Q-table.
     """
-    q_table = ... # TODO: Your code here
+    # q_table is size of maze, initialized to actions:zero
+    q_table = np.zeros((env.size, env.size, env.action_space.n))
 
+    for _ in range(episodes):
+        curr_state = env.reset()
+        done = False
+        while not done:
+            if np.random.rand() < epsilon:
+                # Randomize action
+                action = np.random.randint(0, env.action_space.n)
+            else:
+                # Choose best action
+                action = np.argmax(q_table[curr_state[0]][curr_state[1]])
+            
+            # Take action
+            new_state, reward, done, useless_list = env.step(action)
 
-    for episode in range(episodes):
-        # TODO: Your code here
-        ...
+            # Update q_table
+            q_table[curr_state[0]][curr_state[1]][action] += alpha * (reward + gamma * np.max(q_table[new_state[0]][new_state[1]]) - q_table[curr_state[0]][curr_state[1]][action])
 
+            # Update current state
+            curr_state = new_state
+            
 
     return q_table
 
@@ -178,7 +236,7 @@ def simulate_maze_env_q_learning(
     states = [state]  # List to store states
 
     while not done:
-        action = ... # TODO: Your code here
+        action = np.argmax(q_table[state[0]][state[1]])
         state, _, done, _ = env.step(action)
         frames.append(
             env.render(mode="rgb_array").T
