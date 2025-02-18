@@ -31,7 +31,7 @@ def simple_policy():
     Returns:
         dict: A dictionary with state tuples as keys and their actions (HIT or STICK).
     """
-    # Initialize Policy (e.g., always HIT if < 20, else STICK)
+    # Initialize Policy (e.g., always HIT if < 18, else STICK)
     policy = {}
     for psum in PLAYER_SUM_RANGE:
         for dealer_up in DEALER_UPCARD_RANGE:

@@ -9,18 +9,44 @@ def policy_evaluation(env, V, policy, episodes=500000, gamma=1.0):
     - Generate episodes using the current policy
     - Update state value function as an average return
     """
-    # TODO:
-    # track number of visits to each state and track sum of returns for each state
-    # TODO:
-    # Initialize returns_sum and returns_count
+    returns_sum = {}
+    returns_count = {}
 
     for _ in tqdm(range(episodes), desc="Policy evaluation"):
-        ...
-        # Generate one episode
-        # TODO:...
-        # First-visit Monte Carlo: Update returns for the first occurrence of each state
-            # Compute return from the first visit onward
-                # TODO # Update returns_sum and returns_count
+        episode = []
+        state = env.reset()
+        done = False
 
-    # Update V(s) as the average return
-    ... # TODO
+        # Append to lists so that keys exist
+        returns_sum[state] = 0
+        returns_count[state] = 0
+
+        while not done:
+            action = policy[state]
+            next_state, reward, done = env.step(action)
+            episode.append((state, reward))
+            state = next_state
+
+            # Append to lists so that keys exist
+            returns_sum[state] = 0
+            returns_count[state] = 0
+        
+        r = 0
+
+        for t in range(len(episode) - 1, -1, -1):
+            state = episode[t][0]
+            reward = episode[t][1]
+            r = reward + gamma * r
+
+            returns_sum[state] += r
+            returns_count[state] += 1
+            V[state] = returns_sum[state] / returns_count[state]
+
+            if state == (10, 10, False):
+                print(state)
+                print(episode)
+                print(returns_sum[state])
+                print(returns_count[state])
+                print(V[state])
+
+    return V
