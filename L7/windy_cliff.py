@@ -90,17 +90,62 @@ env = WindyCliffWorld()
 
 def q_learning(env, num_episodes, alpha, gamma, epsilon):
     q_table = np.zeros([env.observation_space.n, env.action_space.n])
+    total_rewards = []
 
-    # TODO: Implement Q-learning algorithm
-    
-    return q_table
+    for _ in range(num_episodes):
+        curr_state = env.reset()
+        done = False
+        while not done:
+            if np.random.rand() < epsilon:
+                # Randomize action
+                action = np.random.randint(0, env.action_space.n)
+            else:
+                # Choose best action
+                action = np.argmax(q_table[curr_state])
+            
+            # Take action
+            new_state, reward, done, useless_list = env.step(action)
+
+            # Update q_table
+            q_table[curr_state][action] += alpha * (reward + gamma * np.max(q_table[new_state]) - q_table[curr_state][action])
+
+            # Update current state
+            curr_state = new_state
+
+        # Append to total rewards
+        reward_total = q_table.sum()
+        total_rewards.append(reward_total)
+            
+    return q_table, total_rewards
 
 def sarsa(env, num_episodes, alpha, gamma, epsilon):
     q_table = np.zeros([env.observation_space.n, env.action_space.n])
+    total_rewards = []
 
-    # TODO: Implement SARSA algorithm
+    for _ in range(num_episodes):
+        curr_state = env.reset()
+        done = False
+        while not done:
+            if np.random.rand() < epsilon:
+                # Randomize action
+                action = np.random.randint(0, env.action_space.n)
+            else:
+                # Choose best action
+                action = np.argmax(q_table[curr_state])
+            
+            # Take action
+            new_state, reward, done, useless_list = env.step(action)
+
+            # Update q_table using SARSA update rule
+            q_table[curr_state][action] += alpha * (reward + gamma * q_table[new_state][action] - q_table[curr_state][action])
+
+            curr_state = new_state
+        
+        # Append to total rewards
+        reward_total = q_table.sum()
+        total_rewards.append(reward_total)
     
-    return q_table
+    return q_table, total_rewards
 
 def save_gif(frames, path='./', filename='gym_animation.gif'):
     imageio.mimsave(os.path.join(path, filename), frames, duration=0.5)
@@ -120,17 +165,27 @@ def visualize_policy(env, q_table, filename='q_learning.gif'):
 # Example usage:
 
 # Testing Q-Learning
-env = WindyCliffWorld()
-q_table = q_learning(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
-visualize_policy(env, q_table, filename='q_learning_windy_cliff.gif')
+# env = WindyCliffWorld()
+# q_table, total_rewards = q_learning(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
+# visualize_policy(env, q_table, filename='q_learning_windy_cliff.gif')
 
 # Testing SARSA
 # env = WindyCliffWorld()
-# q_table = sarsa(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
+# q_table, total_rewards = sarsa(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
 # visualize_policy(env, q_table, filename='sarsa_windy_cliff.gif')
 
-# TODO: Run experiments with different hyperparameters and visualize the results
-# You should generate two plots:
-# 1. Total reward over episodes for different α and ε values for Q-learning
-# 2. Total reward over episodes for different α and ε values for SARSA
-# For each plot, use at least 2 different values for α and 2 different values for ε
+# Run experiments with different hyperparameters
+# env = WindyCliffWorld()
+# q_table, total_rewards_11 = sarsa(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
+# q_table, total_rewards_15 = sarsa(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.5)
+# q_table, total_rewards_55 = sarsa(env, num_episodes=500, alpha=0.5, gamma=0.99, epsilon=0.5)
+# q_table, total_rewards_51 = sarsa(env, num_episodes=500, alpha=0.5, gamma=0.99, epsilon=0.1)
+
+# plt.plot(total_rewards_11, label='α=0.1, ε=0.1')
+# plt.plot(total_rewards_51, label='α=0.5, ε=0.1')
+# plt.plot(total_rewards_15, label='α=0.1, ε=0.5')
+# plt.plot(total_rewards_55, label='α=0.5, ε=0.5')
+# plt.xlabel('Episode')
+# plt.ylabel('Total Reward')
+# plt.legend()
+# plt.show()
