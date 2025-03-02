@@ -4,7 +4,7 @@ import numpy as np
 import time
 
 # Define the Lunar Lander environment
-env = gym.make('LunarLander-v2', render_mode='human')
+env = gym.make('LunarLander-v3', render_mode='human')
 
 # Initialize Pygame
 pygame.init()

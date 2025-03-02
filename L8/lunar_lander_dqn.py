@@ -10,14 +10,19 @@ import torch.nn.functional as F
 import os
 
 # Define the Lunar Lander environment with render_mode
-env = gym.make('LunarLander-v2', render_mode='rgb_array')
+env = gym.make('LunarLander-v3', render_mode='rgb_array')
 
 # Set seeds for reproducibility
 torch.manual_seed(0)
 np.random.seed(0)
 random.seed(0)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
 
 class QNetwork(nn.Module):
     """Neural Network for approximating Q-values."""
@@ -31,12 +36,18 @@ class QNetwork(nn.Module):
         """
         super(QNetwork, self).__init__()
         self.seed = torch.manual_seed(seed)
-        # TODO: Define the neural network layers
+        # Define the neural network layers
         # You can keep it fairly simple, e.g., with 3 linear layers with 64 units each
         # and use ReLU activations for the hidden layers.
         # However, make sure that the input size of the first layer matches the state size
         # and the output size of the last layer matches the action size
         # This is because the input to the network will be the state and the output will be the Q-values for each action
+
+        self.layer1 = nn.Linear(state_size, 64)
+        self.relu1 = nn.ReLU()
+        self.layer2 = nn.Linear(64, 64)
+        self.relu2 = nn.ReLU()
+        self.layer3 = nn.Linear(64, action_size)
     
     def forward(self, state):
         """Build a network that maps state -> action values.
@@ -47,8 +58,11 @@ class QNetwork(nn.Module):
         =======
             torch.Tensor: The predicted action values
         """
-        # TODO: Define the forward pass
+        # Define the forward pass
         # You're basically just passing the state through the network here (based on the layers you defined in __init__) and returning the output
+        x = self.relu1(self.layer1(state))
+        x = self.relu2(self.layer2(x))
+        return self.layer3(x)
 
 class ReplayBuffer:
     """Fixed-size buffer to store experience tuples."""
@@ -69,22 +83,23 @@ class ReplayBuffer:
 
     def add(self, state, action, reward, next_state, done):
         """Add a new experience to memory."""
-        # TODO: Implement this method
+        # Implement this method
         # Use the namedtuple 'Experience' to create an experience tuple and append it to the memory
+        self.memory.append(self.experience(state, action, reward, next_state, done))
 
     def sample(self):
         """Randomly sample a batch of experiences from memory."""
-        # TODO: Complete this method
+        # Complete this method
         # We first use random.sample to sample self.batch_size experiences from self.memory
         # Convert the sampled experiences to tensors and return them as a tuple
         experiences = random.sample(self.memory, k=self.batch_size)
         states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(device)
         # Similarly, convert the other components of the experiences to tensors
         # the `actions` tensor should be of type long
-        actions = ...
-        rewards = ...
-        next_states = ...
-        dones = ...
+        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).long().to(device)
+        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(device)
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(device)
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(device)
         return (states, actions, rewards, next_states, dones)
 
     def __len__(self):
@@ -106,25 +121,26 @@ class DQNAgent:
         self.seed = random.seed(seed)
 
         # Q-Network
-        # TODO: Initialize Q-networks (local and target)
+        #  Initialize Q-networks (local and target)
         # Hints: Use QNetwork to create both qnetwork_local and qnetwork_target, and move them to device
         # Use optim.Adam to create an optimizer for qnetwork_local
-
+        self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
+        self.qnetwork_target = QNetwork(state_size, action_size, seed).to(device)
+        self.qnetwork_local.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=5e-4)
 
 
         # Replay memory
-        # TODO: Initialize replay memory
+        #  Initialize replay memory
         # Hint: Create a ReplayBuffer object with appropriate parameters (action_size, buffer_size, batch_size, seed)
-
+        self.memory = ReplayBuffer(action_size, buffer_size=int(1e5), batch_size=64, seed=seed)
 
         self.t_step = 0
 
     def step(self, state, action, reward, next_state, done):
         """Save experience in replay memory, and use random sample from buffer to learn."""
-        # TODO: Save the experience in replay memory
+        # Save the experience in replay memory
         # Hint: Use the add method of ReplayBuffer
-
-
+        self.memory.add(state, action, reward, next_state, done)
 
         # Learn every UPDATE_EVERY time steps.
         self.t_step = (self.t_step + 1) % 4
@@ -161,7 +177,7 @@ class DQNAgent:
         """
         states, actions, rewards, next_states, dones = experiences
 
-        # TODO: Compute and minimize the loss
+        # Compute and minimize the loss
         # 1. Compute Q targets for current states (s')
         # Hint: Use the target network to get the next action values
         # 2. Compute Q expected for current states (s)
@@ -169,8 +185,17 @@ class DQNAgent:
         # 3. Compute the loss between Q expected and Q target
         # 4. Perform a gradient descent step to update the local network
 
-        # TODO: Update target network
+        q_targets = self.qnetwork_target(next_states).detach().max(1)[0].unsqueeze(1)
+        q_targets = rewards + gamma * q_targets * (1 - dones)
+        q_expected = self.qnetwork_local(states).gather(1, actions)
+        loss = F.mse_loss(q_expected, q_targets)
+        self.qnetwork_local.optimizer.zero_grad()
+        loss.backward()
+        self.qnetwork_local.optimizer.step()
+
+        #  Update target network
         # Hint: Use the soft_update method provided
+        self.soft_update(self.qnetwork_local, self.qnetwork_target, tau=1e-3)
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
